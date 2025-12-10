@@ -1,0 +1,72 @@
+/* ------------ 리셋 ------------ */
+@import "reset.css";
+
+/* ------------ font ------------ */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+body {
+    font-family: "Roboto", "Noto Sans KR", sans-serif;
+    overflow-x: hidden;
+    font-size: 16px;
+    background: #111;
+}
+section {
+    padding: 0 6rem;
+}
+#btn_top {
+    position: fixed;
+    right: 40px;
+    bottom: 20px;
+    width: 4em;
+    height: 4em;
+    border-radius: 50%;
+    pointer-events: none;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background-color: #eeeeeea8;
+    color: #212121;
+    box-shadow: 0 0 0 1px #ffffff14, 0px 4px 8px 0 rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transition: opacity 220ms ease, transform 220ms ease, box-shadow 150ms ease;
+    z-index: 9999;
+    backdrop-filter: blur(10px);
+}
+#btn_top span {
+    font-size: 24px;
+    line-height: 1;
+}
+#btn_top.show {
+    opacity: 1;
+    pointer-events: auto;
+    cursor: pointer;
+}
+#project_toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: rgb(255, 255, 255);
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 0 0.85em !important;
+    height: 2em;
+    border-radius: 1rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.35s ease;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 0 0 1px #ffffff14, 0px 4px 8px 0 rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+}
+#project_toast.show {
+    opacity: 1;
+}
+
+/* ------------ 미디어쿼리 ------------ */
+@media (max-width: 991px) {
+    section {
+        padding: 0 3rem;
+    }
+}

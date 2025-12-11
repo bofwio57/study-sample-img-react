@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Header from "./components/Header";
+import Project from "./components/Project";
 
 function App() {
     return (
@@ -7,6 +8,7 @@ function App() {
             <div id="wrap">
                 <main>
                     <Header />
+                    <Project />
                 </main>
             </div>
             <div id="btn_top" aria-label="페이지 상단으로 이동">

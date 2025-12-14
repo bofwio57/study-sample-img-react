@@ -12,9 +12,7 @@ function App() {
                 </main>
             </div>
             <div id="btn_top" aria-label="페이지 상단으로 이동">
-                <span className="material-icons" aria-hidden="true">
-                    arrow_upward
-                </span>
+                <span className="material-symbols-outlined"> arrow_upward </span>
             </div>
             <div id="project_toast"></div>
         </>

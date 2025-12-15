@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
+import useLenis from "./hook/useLenis";
 import Header from "./components/Header";
 import Project from "./components/Project";
 import { supabase } from "./lib/supabase";
 
 function App() {
+    const lenisRef = useLenis();
     const [filters, setFilters] = useState([]); //필터 tag
     const [projectItems, setProjectItems] = useState([]); //프로젝트
     const [activeFilter, setActiveFilter] = useState("all");
+    const [showTop, setShowTop] = useState(false);
 
     // 데이터 조회 (READ)
     useEffect(() => {
@@ -88,6 +91,14 @@ function App() {
 
     const filteredProjects = activeFilter === "all" ? projectItems : projectItems.filter((project) => project.tags.includes(activeFilter));
 
+    useEffect(() => {
+        const onScroll = () => {
+            setShowTop(window.scrollY > 200);
+        };
+        window.addEventListener("scroll", onScroll);
+        return () => window.removeEventListener("scroll", onScroll);
+    }, []);
+
     return (
         <>
             <div id="wrap">
@@ -96,7 +107,17 @@ function App() {
                     <Project projectItems={filteredProjects} addProject={addProject} />
                 </main>
             </div>
-            <div id="btn_top" aria-label="페이지 상단으로 이동">
+            <div
+                id="btn_top"
+                aria-label="페이지 상단으로 이동"
+                className={showTop ? "show" : ""}
+                onClick={() =>
+                    lenisRef.current?.scrollTo(0, {
+                        duration: 0.6,
+                        easing: (t) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t),
+                    })
+                }
+            >
                 <span className="material-symbols-outlined"> arrow_upward </span>
             </div>
             <div id="project_toast"></div>

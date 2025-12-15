@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, useReducer, Fragment, forwardRef, useImperativeHandle } from "react";
 import PropTypes from "prop-types";
 import styled, { css } from "styled-components";
-import { supabase } from "../lib/supabase";
 
 export const ModalArea = styled.div`
     position: fixed;
@@ -88,77 +87,48 @@ export const Button = styled.button`
     cursor: pointer;
     transition: all 0.35s ease;
 
-    ${({ variant }) =>
-        variant === "primary" &&
-        css`
-            backdrop-filter: blur(10px);
-            background-color: #eeeeeea8;
-            color: #212121;
+    &.primary {
+        backdrop-filter: blur(10px);
+        background-color: #eeeeeea8;
+        color: #212121;
 
-            &:hover {
-                background-color: #fff;
-            }
-        `}
+        &:hover {
+            background-color: #fff;
+        }
+    }
 
-    ${({ variant }) =>
-        variant === "ghost" &&
-        css`
-            background: transparent;
-            border: 1px solid #ffffff1a;
-            color: #7c7c7c;
+    &.ghost {
+        background: transparent;
+        border: 1px solid #ffffff1a;
+        color: #7c7c7c;
 
-            &:hover {
-                background: #1e1e20;
-                color: #fff;
-            }
-        `}
+        &:hover {
+            background: #1e1e20;
+            color: #fff;
+        }
+    }
 `;
 
-function ProjectModal({ onClose, onAddProject }) {
+function ProjectModal({ onClose, addProject }) {
     const [title, setTitle] = useState("");
     const [tagInput, setTagInput] = useState("");
     const [file, setFile] = useState(null);
 
-    const extractTags = (input) => {
-        return input
-            .split("/") // "/" 기준 분리
-            .map((t) => t.trim()) // 공백 제거
-            .filter(Boolean); // 빈 문자열 제거
-    };
-    const handleSubmit = async () => {
+    const extractTags = (input) =>
+        input
+            .split("/")
+            .map((t) => t.trim())
+            .filter(Boolean);
+
+    const handleSubmit = () => {
         if (!title) return;
 
-        let imgUrl = "";
-
-        // 1️⃣ 이미지 업로드
-        if (file) {
-            const fileExt = file.name.split(".").pop(); //점으로 자르고 가장 마지막 문자 = 확장자
-            const baseName = file.name.replace(`.${fileExt}`, ""); //확장자만 제거한 이름 부분
-            const fileName = `${baseName}_${Date.now()}.${fileExt}`; //파일명_날짜.확장자
-
-            const { error } = await supabase.storage.from("project_img").upload(fileName, file);
-
-            if (error) {
-                console.error(error);
-                return;
-            }
-
-            // 2️⃣ public URL 생성
-            const { data } = supabase.storage.from("project_img").getPublicUrl(fileName);
-
-            imgUrl = data.publicUrl;
-        }
-
-        // 🔥 여기서 최종 태그 추출
-        const finalTags = extractTags(tagInput);
-
-        const newProject = {
+        addProject({
             title,
-            tags: finalTags,
-            img_url: imgUrl,
-        };
+            tags: extractTags(tagInput),
+            file, // 🔥 파일 그대로 전달
+        });
 
-        await onAddProject(newProject);
         onClose();
     };
 
@@ -187,10 +157,10 @@ function ProjectModal({ onClose, onAddProject }) {
                 </CardBody>
 
                 <CardFoot>
-                    <Button variant="ghost" onClick={onClose}>
+                    <Button className="ghost" onClick={onClose}>
                         취소
                     </Button>
-                    <Button variant="primary" onClick={handleSubmit}>
+                    <Button className="primary" onClick={handleSubmit}>
                         추가
                     </Button>
                 </CardFoot>
@@ -200,14 +170,11 @@ function ProjectModal({ onClose, onAddProject }) {
 }
 
 ProjectModal.propTypes = {
-    // props의 프로퍼티 타입 설정. https://ko.reactjs.org/docs/typechecking-with-proptypes.html
-    // 인자명: PropTypes.func.isRequired,
-    // 인자명: PropTypes.arrayOf(PropTypes.object),
+    onClose: PropTypes.func.isRequired,
+    addProject: PropTypes.func.isRequired,
 };
 ProjectModal.defaultProps = {
-    // props의 디폴트 값 설정. https://ko.reactjs.org/docs/typechecking-with-proptypes.html
-    // 인자명: () => {},
-    // 인자명: [],
+    // 둘다 필수라 없으면 안됨
 };
 
 export default React.memo(ProjectModal); // React.memo()는 props 미변경시 컴포넌트 리렌더링 방지 설정

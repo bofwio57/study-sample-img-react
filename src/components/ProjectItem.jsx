@@ -98,7 +98,7 @@ const StyledProjectItem = styled.div`
     }
 `;
 
-function ProjectItem({ projectItems, onAddProject }) {
+function ProjectItem({ projectItems, addProject }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // 🔥 body 제어
@@ -132,15 +132,15 @@ function ProjectItem({ projectItems, onAddProject }) {
                         <p className="sub_tit">{item.title}</p>
 
                         <ul className="tag_list">
-                            {item.tags?.map((t, idx) => (
-                                <li key={idx}>{t}</li>
+                            {item.tags?.map((tag) => (
+                                <li key={tag}>{tag}</li>
                             ))}
                         </ul>
                     </div>
                 </div>
             ))}
             {/* 모달 */}
-            {isModalOpen && <ProjectModal onClose={() => setIsModalOpen(false)} onAddProject={onAddProject} />}
+            {isModalOpen && <ProjectModal onClose={() => setIsModalOpen(false)} addProject={addProject} />}
         </StyledProjectItem>
     );
 }
@@ -151,12 +151,13 @@ ProjectItem.propTypes = {
     // 인자명: PropTypes.arrayOf(PropTypes.object),
     projectItems: PropTypes.arrayOf(
         PropTypes.shape({
-            id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+            id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired, //숫자 타입과 문자열 타입 둘다 가능
             title: PropTypes.string.isRequired,
             img_url: PropTypes.string,
             tags: PropTypes.arrayOf(PropTypes.string),
         })
-    ).isRequired,
+    ),
+    addProject: PropTypes.func.isRequired,
 };
 ProjectItem.defaultProps = {
     // props의 디폴트 값 설정. https://ko.reactjs.org/docs/typechecking-with-proptypes.html

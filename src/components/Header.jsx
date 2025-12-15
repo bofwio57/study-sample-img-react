@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import styled, { css } from "styled-components";
 import FilterList from "./FilterList";
 
@@ -22,17 +23,19 @@ const StyledHeader = styled.section`
     }
 `;
 
-function Header({ ...props }) {
+function Header({ filters }) {
     return (
         <StyledHeader>
             <div className="container">
                 <div className="main_tit">
                     <h1>Example Hub</h1>
                 </div>
-                <FilterList />
+                <FilterList filters={filters} />
             </div>
         </StyledHeader>
     );
 }
-
+Header.propTypes = {
+    filters: PropTypes.arrayOf(PropTypes.string).isRequired,
+};
 export default React.memo(Header);

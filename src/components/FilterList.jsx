@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import styled, { css } from "styled-components";
-import { supabase } from "../lib/supabase";
 
 const StyledFilterList = styled.ul`
     display: flex;
@@ -32,32 +32,7 @@ const StyledFilterList = styled.ul`
     }
 `;
 
-function FilterList({ ...props }) {
-    const [filters, setFilers] = useState([]);
-
-    useEffect(() => {
-        fetchFilers();
-    }, []);
-
-    const fetchFilers = async () => {
-        try {
-            let { data: project, error } = await supabase.from("project").select("tags");
-
-            if (error) {
-                console.log(error);
-                return;
-            }
-
-            // 1) 모든 tags를 하나로 합치기
-            // 2) 중복 제거
-            const uniqueTags = [...new Set(project.flatMap((row) => row.tags || []))];
-
-            setFilers(uniqueTags);
-        } catch (error) {
-            console.log(error);
-        }
-    };
-
+function FilterList({ filters }) {
     return (
         <StyledFilterList>
             <li data-filter="all">all</li>
@@ -69,5 +44,7 @@ function FilterList({ ...props }) {
         </StyledFilterList>
     );
 }
-
+FilterList.propTypes = {
+    filters: PropTypes.arrayOf(PropTypes.string).isRequired,
+};
 export default React.memo(FilterList);

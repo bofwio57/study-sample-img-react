@@ -6,6 +6,7 @@ import { supabase } from "./lib/supabase";
 function App() {
     const [filters, setFilters] = useState([]); //필터 tag
     const [projectItems, setProjectItems] = useState([]); //프로젝트
+    const [activeFilter, setActiveFilter] = useState("all");
 
     // 데이터 조회 (READ)
     useEffect(() => {
@@ -85,12 +86,14 @@ function App() {
         }
     };
 
+    const filteredProjects = activeFilter === "all" ? projectItems : projectItems.filter((project) => project.tags.includes(activeFilter));
+
     return (
         <>
             <div id="wrap">
                 <main>
-                    <Header filters={filters} />
-                    <Project projectItems={projectItems} addProject={addProject} />
+                    <Header filters={filters} activeFilter={activeFilter} onChange={setActiveFilter} />
+                    <Project projectItems={filteredProjects} addProject={addProject} />
                 </main>
             </div>
             <div id="btn_top" aria-label="페이지 상단으로 이동">

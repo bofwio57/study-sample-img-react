@@ -23,14 +23,14 @@ const StyledHeader = styled.section`
     }
 `;
 
-function Header({ filters }) {
+function Header({ filters, activeFilter, onChange }) {
     return (
         <StyledHeader>
             <div className="container">
                 <div className="main_tit">
                     <h1>Example Hub</h1>
                 </div>
-                <FilterList filters={filters} />
+                <FilterList filters={filters} activeFilter={activeFilter} onChange={onChange} />
             </div>
         </StyledHeader>
     );

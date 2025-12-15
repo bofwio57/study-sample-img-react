@@ -32,12 +32,14 @@ const StyledFilterList = styled.ul`
     }
 `;
 
-function FilterList({ filters }) {
+function FilterList({ filters, activeFilter, onChange }) {
     return (
         <StyledFilterList>
-            <li data-filter="all">all</li>
+            <li data-filter="all" className={activeFilter === "all" ? "active" : ""} onClick={() => onChange("all")}>
+                all
+            </li>
             {filters.map((item, idx) => (
-                <li key={idx} data-filter={item}>
+                <li key={idx} data-filter={item} className={activeFilter === item ? "active" : ""} onClick={() => onChange(item)}>
                     {item}
                 </li>
             ))}

@@ -10,6 +10,8 @@ function App() {
     const [projectItems, setProjectItems] = useState([]); //프로젝트
     const [activeFilter, setActiveFilter] = useState("all");
     const [showTop, setShowTop] = useState(false);
+    const [toastMessage, setToastMessage] = useState("");
+    const [showToastFlag, setShowToastFlag] = useState(false);
 
     // 데이터 조회 (READ)
     useEffect(() => {
@@ -99,12 +101,27 @@ function App() {
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
+    const handleProjectClick = (title) => {
+        navigator.clipboard
+            .writeText(title)
+            .then(() => {
+                setToastMessage(title);
+                setShowToastFlag(true);
+
+                // 1.5초 후 토스트 숨기기
+                setTimeout(() => {
+                    setShowToastFlag(false);
+                }, 1500);
+            })
+            .catch((err) => console.error(err));
+    };
+
     return (
         <>
             <div id="wrap">
                 <main>
                     <Header filters={filters} activeFilter={activeFilter} onChange={setActiveFilter} />
-                    <Project projectItems={filteredProjects} addProject={addProject} />
+                    <Project projectItems={filteredProjects} addProject={addProject} onItemClick={handleProjectClick} />
                 </main>
             </div>
             <div
@@ -120,7 +137,9 @@ function App() {
             >
                 <span className="material-symbols-outlined"> arrow_upward </span>
             </div>
-            <div id="project_toast"></div>
+            <div id="project_toast" className={showToastFlag ? "show" : ""}>
+                {toastMessage}
+            </div>
         </>
     );
 }

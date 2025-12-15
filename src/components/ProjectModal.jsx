@@ -38,6 +38,12 @@ export const CardBody = styled.section`
     label {
         font-size: 13px;
         color: #fff;
+
+        small {
+            color: #eeeeee96;
+            margin-left: 10px;
+            font-size: 13px;
+        }
     }
 `;
 
@@ -151,7 +157,9 @@ function ProjectModal({ onClose, addProject }) {
                     </FormRow>
 
                     <FormRow>
-                        <label>이미지</label>
+                        <label>
+                            이미지<small>* 한글 파일명 불가</small>
+                        </label>
                         <Input type="file" onChange={(e) => setFile(e.target.files[0])} />
                     </FormRow>
                 </CardBody>

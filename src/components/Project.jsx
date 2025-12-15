@@ -103,7 +103,7 @@ const StyledProject = styled.section`
     }
 `;
 
-function Project({ projectItems, addProject }) {
+function Project({ projectItems, addProject, onItemClick }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     // 🔥 body 제어
@@ -129,7 +129,7 @@ function Project({ projectItems, addProject }) {
                         </div>
                     </div>
                     {projectItems?.map((item) => (
-                        <div className="project_item" key={item.id}>
+                        <div className="project_item" key={item.id} onClick={() => onItemClick(item.title)}>
                             <div className="img_area">
                                 <img src={item.img_url || null} alt={item.title} />
                             </div>

@@ -104,9 +104,10 @@ const StyledProject = styled.section`
 `;
 
 function Project({ projectItems, addProject, onItemClick }) {
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    // projectItems > 필터링된 아이템
+    const [isModalOpen, setIsModalOpen] = useState(false); //모달 관련
 
-    // 🔥 body 제어
+    // 🔥 body 제어: 모달이 열리면 스크롤 막기
     useEffect(() => {
         if (isModalOpen) {
             document.body.style.overflow = "hidden";
@@ -118,6 +119,7 @@ function Project({ projectItems, addProject, onItemClick }) {
             document.body.style.overflow = "";
         };
     }, [isModalOpen]);
+
     return (
         <StyledProject>
             <div className="container">
@@ -162,6 +164,7 @@ Project.propTypes = {
         })
     ),
     addProject: PropTypes.func.isRequired,
+    onItemClick: PropTypes.func.isRequired,
 };
 Project.defaultProps = {
     projectItems: [],

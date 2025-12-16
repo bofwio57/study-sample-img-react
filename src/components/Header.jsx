@@ -37,5 +37,7 @@ function Header({ filters, activeFilter, onChange }) {
 }
 Header.propTypes = {
     filters: PropTypes.arrayOf(PropTypes.string).isRequired,
+    activeFilter: PropTypes.string.isRequired,
+    onChange: PropTypes.func.isRequired,
 };
 export default React.memo(Header);

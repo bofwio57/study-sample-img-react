@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 import styled, { css } from "styled-components";
 
@@ -48,5 +48,7 @@ function FilterList({ filters, activeFilter, onChange }) {
 }
 FilterList.propTypes = {
     filters: PropTypes.arrayOf(PropTypes.string).isRequired,
+    activeFilter: PropTypes.string.isRequired,
+    onChange: PropTypes.func.isRequired,
 };
 export default React.memo(FilterList);

@@ -5,19 +5,25 @@ import Project from "./components/Project";
 import { supabase } from "./lib/supabase";
 
 function App() {
+    //top 버튼
     const lenisRef = useLenis();
-    const [filters, setFilters] = useState([]); //필터 tag
-    const [projectItems, setProjectItems] = useState([]); //프로젝트
-    const [activeFilter, setActiveFilter] = useState("all");
-    const [showTop, setShowTop] = useState(false);
-    const [toastMessage, setToastMessage] = useState("");
-    const [showToastFlag, setShowToastFlag] = useState(false);
+    const [showTop, setShowTop] = useState(false); //top 버튼 클래스 제어
+
+    //필터 tag
+    const [filters, setFilters] = useState([]); //중복없는 필터 전체값
+    const [activeFilter, setActiveFilter] = useState("all"); //현재 필터링 값
+
+    //프로젝트
+    const [projectItems, setProjectItems] = useState([]);
+
+    //toast
+    const [toastMessage, setToastMessage] = useState(""); //Message 제어
+    const [showToastFlag, setShowToastFlag] = useState(false); //Toast가 있는지 없는지
 
     // 데이터 조회 (READ)
     useEffect(() => {
         fetchFilters();
     }, []);
-
     const fetchFilters = async () => {
         try {
             let { data: project, error } = await supabase.from("project").select("*");
@@ -43,7 +49,15 @@ function App() {
     };
 
     //데이터를 추가(CREATE)
-    const addProject = async ({ title, tags, file }) => {
+    const addProject = async ({ title, tags, file, password }) => {
+        // 🔐 0️⃣ 관리자 비밀번호 검증
+        const { data: isAdmin, error } = await supabase.rpc("check_admin_password", { input_password: password });
+
+        if (error || !isAdmin) {
+            alert("비밀번호가 틀렸습니다");
+            return;
+        }
+
         let imgUrl = "";
 
         if (file) {
@@ -91,8 +105,10 @@ function App() {
         }
     };
 
+    //필터 기능
     const filteredProjects = activeFilter === "all" ? projectItems : projectItems.filter((project) => project.tags.includes(activeFilter));
 
+    // top버튼 기능
     useEffect(() => {
         const onScroll = () => {
             setShowTop(window.scrollY > 200);
@@ -101,6 +117,7 @@ function App() {
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
+    // 프로젝트 복사 기능
     const handleProjectClick = (title) => {
         navigator.clipboard
             .writeText(title)

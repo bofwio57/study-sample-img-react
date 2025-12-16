@@ -116,10 +116,13 @@ export const Button = styled.button`
 `;
 
 function ProjectModal({ onClose, addProject }) {
+    //db에 추가될 데이터 값을 받아오기 위해
     const [title, setTitle] = useState("");
     const [tagInput, setTagInput] = useState("");
     const [file, setFile] = useState(null);
+    const [password, setPassword] = useState("");
 
+    //필터값 받아오기
     const extractTags = (input) =>
         input
             .split("/")
@@ -127,12 +130,13 @@ function ProjectModal({ onClose, addProject }) {
             .filter(Boolean);
 
     const handleSubmit = () => {
-        if (!title) return;
+        if (!title) return; //타이틀은 필수라
 
         addProject({
             title,
             tags: extractTags(tagInput),
-            file, // 🔥 파일 그대로 전달
+            file, // 🔥 파일 그대로 전달 >app에서 파일 관련 db 처리하기 때문
+            password,
         });
 
         onClose();
@@ -161,6 +165,10 @@ function ProjectModal({ onClose, addProject }) {
                             이미지<small>* 한글 파일명 불가</small>
                         </label>
                         <Input type="file" onChange={(e) => setFile(e.target.files[0])} />
+                    </FormRow>
+                    <FormRow>
+                        <label>관리자 비밀번호</label>
+                        <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
                     </FormRow>
                 </CardBody>
 

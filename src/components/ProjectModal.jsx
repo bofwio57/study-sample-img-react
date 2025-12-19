@@ -20,6 +20,10 @@ export const PopupCard = styled.div`
     border: 1px solid #ffffff1a;
     box-shadow: 0 0 0 1px #ffffff14, 0px 4px 8px rgba(0, 0, 0, 0.3);
     overflow: hidden;
+    @media (max-width: 576px) {
+        max-width: 100%;
+        margin: 0 30px;
+    }
 `;
 
 export const CardHead = styled.header`

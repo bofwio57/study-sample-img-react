@@ -101,6 +101,27 @@ const StyledProject = styled.section`
             font-size: 30px;
         }
     }
+    @media (max-width: 991px) {
+        padding-bottom: 10rem;
+        .txt_box {
+            p {
+                font-size: 1rem;
+            }
+        }
+    }
+    @media (max-width: 767px) {
+        .project_items {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    @media (max-width: 576px) {
+        .project_items {
+            grid-template-columns: repeat(1, 1fr);
+        }
+        .project_add {
+            aspect-ratio: 800 / 770;
+        }
+    }
 `;
 
 function Project({ projectItems, addProject, onItemClick }) {

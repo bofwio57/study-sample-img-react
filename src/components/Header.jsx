@@ -21,6 +21,14 @@ const StyledHeader = styled.section`
         line-height: 1;
         color: #fff;
     }
+    @media (max-width: 991px) {
+        padding: 5rem 3rem;
+    }
+    @media (max-width: 767px) {
+        .main_tit h1 {
+            font-size: 51px;
+        }
+    }
 `;
 
 function Header({ filters, activeFilter, onChange }) {

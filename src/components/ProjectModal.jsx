@@ -18,7 +18,9 @@ export const PopupCard = styled.div`
     border-radius: 10px;
     background-color: #161616;
     border: 1px solid #ffffff1a;
-    box-shadow: 0 0 0 1px #ffffff14, 0px 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow:
+        0 0 0 1px #ffffff14,
+        0px 4px 8px rgba(0, 0, 0, 0.3);
     overflow: hidden;
     @media (max-width: 576px) {
         max-width: 100%;
@@ -117,14 +119,46 @@ export const Button = styled.button`
             color: #fff;
         }
     }
+    &.danger {
+        color: #b84c4b;
+        border: 1px solid #b84c4b;
+
+        &:hover {
+            background: #b84c4b;
+            color: #fff;
+        }
+    }
 `;
 
-function ProjectModal({ onClose, addProject }) {
+function ProjectModal({ onClose, addProject, updateProject, deleteProject, editingProject }) {
+    const isEdit = Boolean(editingProject);
+
     //db에 추가될 데이터 값을 받아오기 위해
     const [title, setTitle] = useState("");
     const [tagInput, setTagInput] = useState("");
     const [file, setFile] = useState(null);
     const [password, setPassword] = useState("");
+
+    // 🔥 이미지 미리보기 (기존 or 새 이미지)
+    const [previewImg, setPreviewImg] = useState("");
+
+    // ✅ 수정 모드일 경우 기존 데이터 주입
+    useEffect(() => {
+        if (editingProject) {
+            setTitle(editingProject.title || "");
+            setTagInput(editingProject.tags?.join("/") || "");
+            setPreviewImg(editingProject.img_url || "");
+        }
+    }, [editingProject]);
+
+    // ✅ 이미지 변경 시 미리보기
+    const handleFileChange = (e) => {
+        const selectedFile = e.target.files[0];
+        if (!selectedFile) return;
+
+        setFile(selectedFile);
+        setPreviewImg(URL.createObjectURL(selectedFile));
+    };
 
     //필터값 받아오기
     const extractTags = (input) =>
@@ -136,21 +170,40 @@ function ProjectModal({ onClose, addProject }) {
     const handleSubmit = () => {
         if (!title) return; //타이틀은 필수라
 
-        addProject({
+        const payload = {
             title,
             tags: extractTags(tagInput),
-            file, // 🔥 파일 그대로 전달 >app에서 파일 관련 db 처리하기 때문
-            password,
-        });
+            file, // 🔥 file 없으면 기존 이미지 유지됨
+        };
+
+        // addProject({
+        //     title,
+        //     tags: extractTags(tagInput),
+        //     file, // 🔥 파일 그대로 전달 >app에서 파일 관련 db 처리하기 때문
+        //     password,
+        // });
+
+        if (isEdit) {
+            updateProject(project.id, payload);
+        } else {
+            addProject(payload);
+        }
 
         onClose();
+    };
+
+    const handleDelete = () => {
+        if (window.confirm("정말 삭제하시겠습니까?")) {
+            deleteProject(project.id);
+            onClose();
+        }
     };
 
     return (
         <ModalArea role="dialog" aria-modal="true" onClick={onClose}>
             <PopupCard onClick={(e) => e.stopPropagation()}>
                 <CardHead>
-                    <h2>NEW PROJECT</h2>
+                    <h2>{isEdit ? "PROJECT EDIT" : "NEW PROJECT"}</h2>
                 </CardHead>
 
                 <CardBody>
@@ -168,8 +221,22 @@ function ProjectModal({ onClose, addProject }) {
                         <label>
                             이미지<small>* 한글 파일명 불가</small>
                         </label>
-                        <Input type="file" onChange={(e) => setFile(e.target.files[0])} />
+                        <Input type="file" onChange={handleFileChange} />
                     </FormRow>
+                    {/* 🔥 이미지 미리보기 */}
+                    {previewImg && (
+                        <FormRow>
+                            <img
+                                src={previewImg}
+                                alt="preview"
+                                style={{
+                                    width: "100%",
+                                    borderRadius: "8px",
+                                    marginTop: "10px",
+                                }}
+                            />
+                        </FormRow>
+                    )}
                     <FormRow>
                         <label>관리자 비밀번호</label>
                         <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
@@ -180,8 +247,13 @@ function ProjectModal({ onClose, addProject }) {
                     <Button className="ghost" onClick={onClose}>
                         취소
                     </Button>
+                    {isEdit && (
+                        <Button className="danger" onClick={handleDelete}>
+                            삭제
+                        </Button>
+                    )}
                     <Button className="primary" onClick={handleSubmit}>
-                        추가
+                        {isEdit ? "수정" : "추가"}
                     </Button>
                 </CardFoot>
             </PopupCard>

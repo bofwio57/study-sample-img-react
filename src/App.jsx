@@ -118,7 +118,7 @@ function App() {
     }, []);
 
     // 프로젝트 복사 기능
-    const handleProjectClick = (title) => {
+    const handleCopyFileClick = (title) => {
         navigator.clipboard
             .writeText(title)
             .then(() => {
@@ -133,12 +133,39 @@ function App() {
             .catch((err) => console.error(err));
     };
 
+    // ✅ UPDATE
+    const updateProject = async (id, { title, tags, file }) => {
+        let updateData = { title, tags };
+
+        if (file) {
+            const ext = file.name.split(".").pop();
+            const name = `${Date.now()}.${ext}`;
+            await supabase.storage.from("project_img").upload(name, file);
+            updateData.img_url = supabase.storage.from("project_img").getPublicUrl(name).data.publicUrl;
+        }
+        const { data } = await supabase.from("project").update(updateData).eq("id", id).select();
+
+        setProjectItems((prev) => prev.map((item) => (item.id === id ? data[0] : item)));
+    };
+
+    // ✅ DELETE
+    const deleteProject = async (id) => {
+        await supabase.from("project").delete().eq("id", id);
+        setProjectItems((prev) => prev.filter((item) => item.id !== id));
+    };
+
     return (
         <>
             <div id="wrap">
                 <main>
                     <Header filters={filters} activeFilter={activeFilter} onChange={setActiveFilter} />
-                    <Project projectItems={filteredProjects} addProject={addProject} onItemClick={handleProjectClick} />
+                    <Project
+                        projectItems={filteredProjects}
+                        addProject={addProject}
+                        onCopyFileClick={handleCopyFileClick}
+                        updateProject={updateProject}
+                        deleteProject={deleteProject}
+                    />
                 </main>
             </div>
             <div

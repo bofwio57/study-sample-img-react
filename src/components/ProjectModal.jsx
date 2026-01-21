@@ -168,12 +168,20 @@ function ProjectModal({ onClose, addProject, updateProject, deleteProject, editi
             .filter(Boolean);
 
     const handleSubmit = () => {
-        if (!title) return; //타이틀은 필수라
+        //타이틀/비번은 필수다
+        if (!title) {
+            alert("제목을 입력하세요");
+            return;
+        } else if (!password) {
+            alert("비밀번호를 입력하세요");
+            return;
+        }
 
         const payload = {
             title,
             tags: extractTags(tagInput),
             file, // 🔥 file 없으면 기존 이미지 유지됨
+            password,
         };
 
         // addProject({
@@ -184,7 +192,7 @@ function ProjectModal({ onClose, addProject, updateProject, deleteProject, editi
         // });
 
         if (isEdit) {
-            updateProject(project.id, payload);
+            updateProject(editingProject.id, payload);
         } else {
             addProject(payload);
         }
@@ -193,8 +201,13 @@ function ProjectModal({ onClose, addProject, updateProject, deleteProject, editi
     };
 
     const handleDelete = () => {
+        if (!password) {
+            alert("비밀번호를 입력하세요");
+            return;
+        }
+
         if (window.confirm("정말 삭제하시겠습니까?")) {
-            deleteProject(project.id);
+            deleteProject(editingProject.id, password);
             onClose();
         }
     };

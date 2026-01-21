@@ -20,7 +20,7 @@ function App() {
     const [toastMessage, setToastMessage] = useState(""); //Message 제어
     const [showToastFlag, setShowToastFlag] = useState(false); //Toast가 있는지 없는지
 
-    // 데이터 조회 (READ)
+    // 1️⃣ 최초 데이터 조회 (READ)
     useEffect(() => {
         fetchFilters();
     }, []);
@@ -38,8 +38,8 @@ function App() {
             // 2) 중복 제거
 
             //태그
-            const uniqueTags = [...new Set(project.flatMap((row) => row.tags || []))];
-            setFilters(uniqueTags);
+            // const uniqueTags = [...new Set(project.flatMap((row) => row.tags || []))];
+            // setFilters(uniqueTags);
 
             //프로젝트
             setProjectItems(project || []);
@@ -48,24 +48,49 @@ function App() {
         }
     };
 
+    useEffect(() => {
+        const allTags = projectItems.flatMap((item) => item.tags || []);
+        const uniqueTags = [...new Set(allTags)];
+        setFilters(uniqueTags);
+    }, [projectItems]);
+
+    // 관리자 검증
+    const checkAdmin = async (password) => {
+        const { data, error } = await supabase.rpc("check_admin_password", {
+            input_password: password,
+        });
+
+        if (error || !data) {
+            alert("비밀번호가 틀렸습니다");
+            return false;
+        }
+
+        return true;
+    };
+
+    const generateFileName = (file) => {
+        // 1️⃣ 이미지 업로드
+        const fileExt = file.name.split(".").pop(); //점으로 자르고 가장 마지막 문자 = 확장자
+        const baseName = file.name.replace(`.${fileExt}`, ""); //확장자만 제거한 이름 부분
+
+        return `${baseName}_${Date.now()}.${fileExt}`;
+    };
+
     //데이터를 추가(CREATE)
     const addProject = async ({ title, tags, file, password }) => {
         // 🔐 0️⃣ 관리자 비밀번호 검증
-        const { data: isAdmin, error } = await supabase.rpc("check_admin_password", { input_password: password });
-
-        if (error || !isAdmin) {
-            alert("비밀번호가 틀렸습니다");
-            return;
-        }
+        const isAdmin = await checkAdmin(password);
+        if (!isAdmin) return;
 
         let imgUrl = "";
 
         if (file) {
             try {
                 // 1️⃣ 이미지 업로드
-                const fileExt = file.name.split(".").pop(); //점으로 자르고 가장 마지막 문자 = 확장자
-                const baseName = file.name.replace(`.${fileExt}`, ""); //확장자만 제거한 이름 부분
-                const fileName = `${baseName}_${Date.now()}.${fileExt}`; //파일명_날짜.확장자
+                // const fileExt = file.name.split(".").pop(); //점으로 자르고 가장 마지막 문자 = 확장자
+                // const baseName = file.name.replace(`.${fileExt}`, ""); //확장자만 제거한 이름 부분
+                // const fileName = `${baseName}_${Date.now()}.${fileExt}`; //파일명_날짜.확장자
+                const fileName = generateFileName(file); //파일명_날짜.확장자
 
                 const { uploadError } = await supabase.storage.from("project_img").upload(fileName, file);
 
@@ -99,7 +124,7 @@ function App() {
             setProjectItems((prev) => [data[0], ...prev]);
 
             // 태그 즉시 갱신
-            setFilters((prev) => [...new Set([...prev, ...(data[0].tags || [])])]);
+            // setFilters((prev) => [...new Set([...prev, ...(data[0].tags || [])])]);
         } catch (error) {
             console.log(error);
         }
@@ -116,6 +141,12 @@ function App() {
         window.addEventListener("scroll", onScroll);
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
+
+    //파일명 추출
+    const getFileNameFromUrl = (url) => {
+        if (!url) return null;
+        return url.split("/").pop();
+    };
 
     // 프로젝트 복사 기능
     const handleCopyFileClick = (title) => {
@@ -134,23 +165,71 @@ function App() {
     };
 
     // ✅ UPDATE
-    const updateProject = async (id, { title, tags, file }) => {
+    const updateProject = async (id, { title, tags, file, password }) => {
+        const isAdmin = await checkAdmin(password);
+        if (!isAdmin) return;
+
         let updateData = { title, tags };
 
         if (file) {
-            const ext = file.name.split(".").pop();
-            const name = `${Date.now()}.${ext}`;
-            await supabase.storage.from("project_img").upload(name, file);
-            updateData.img_url = supabase.storage.from("project_img").getPublicUrl(name).data.publicUrl;
-        }
-        const { data } = await supabase.from("project").update(updateData).eq("id", id).select();
+            // 🔥 기존 이미지 조회
+            const { data: oldProject } = await supabase.from("project").select("img_url").eq("id", id).single();
 
+            // 🔥 기존 이미지 삭제
+            if (oldProject?.img_url) {
+                const oldFileName = getFileNameFromUrl(oldProject.img_url);
+                if (oldFileName) {
+                    await supabase.storage.from("project_img").remove([oldFileName]);
+                }
+            }
+            // 🔥 새 이미지 업로드
+            const updateFileName = generateFileName(file);
+
+            const { error: uploadError } = await supabase.storage.from("project_img").upload(updateFileName, file);
+
+            if (uploadError) {
+                console.error(uploadError);
+                return;
+            }
+
+            updateData.img_url = supabase.storage.from("project_img").getPublicUrl(updateFileName).data.publicUrl;
+        }
+        const { data, error } = await supabase.from("project").update(updateData).eq("id", id).select();
+        if (error) return console.error(error);
         setProjectItems((prev) => prev.map((item) => (item.id === id ? data[0] : item)));
     };
 
     // ✅ DELETE
-    const deleteProject = async (id) => {
-        await supabase.from("project").delete().eq("id", id);
+    const deleteProject = async (id, password) => {
+        const isAdmin = await checkAdmin(password);
+        if (!isAdmin) return;
+
+        // 1️⃣ 삭제할 프로젝트 먼저 조회 (이미지 URL 얻기)
+        const { data: project, error: fetchError } = await supabase.from("project").select("img_url").eq("id", id).single(); //객체 한개로 온다고 배열이 아니고
+
+        if (fetchError) {
+            console.error(fetchError);
+            return;
+        }
+
+        // 2️⃣ Storage 이미지 삭제
+        if (project?.img_url) {
+            //project가 존재할 때만 img_url에 접근하라
+            const fileName = getFileNameFromUrl(project.img_url);
+
+            if (fileName) {
+                const { error: storageError } = await supabase.storage.from("project_img").remove([fileName]);
+
+                if (storageError) {
+                    console.error("이미지 삭제 실패:", storageError);
+                }
+            }
+        }
+        // 3️⃣ Table row 삭제
+        const { error } = await supabase.from("project").delete().eq("id", id);
+        if (error) return console.error(error);
+
+        // 4️⃣ 상태 반영
         setProjectItems((prev) => prev.filter((item) => item.id !== id));
     };
 

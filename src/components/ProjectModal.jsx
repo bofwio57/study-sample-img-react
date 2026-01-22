@@ -131,6 +131,7 @@ export const Button = styled.button`
 `;
 
 function ProjectModal({ onClose, addProject, updateProject, deleteProject, editingProject }) {
+    // - editingProject가 있으면 수정, 없으면 신규 생성
     const isEdit = Boolean(editingProject);
 
     //db에 추가될 데이터 값을 받아오기 위해
@@ -139,10 +140,10 @@ function ProjectModal({ onClose, addProject, updateProject, deleteProject, editi
     const [file, setFile] = useState(null);
     const [password, setPassword] = useState("");
 
-    // 🔥 이미지 미리보기 (기존 or 새 이미지)
+    // 이미지 미리보기 (기존 or 새 이미지)
     const [previewImg, setPreviewImg] = useState("");
 
-    // ✅ 수정 모드일 경우 기존 데이터 주입
+    // 수정 모드일 경우 기존 데이터 주입
     useEffect(() => {
         if (editingProject) {
             setTitle(editingProject.title || "");
@@ -151,7 +152,7 @@ function ProjectModal({ onClose, addProject, updateProject, deleteProject, editi
         }
     }, [editingProject]);
 
-    // ✅ 이미지 변경 시 미리보기
+    // 이미지 선택 시 미리보기
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
         if (!selectedFile) return;
@@ -160,13 +161,14 @@ function ProjectModal({ onClose, addProject, updateProject, deleteProject, editi
         setPreviewImg(URL.createObjectURL(selectedFile));
     };
 
-    //필터값 받아오기
+    //필터값 변환 > "react/js/ui" → ["react", "js", "ui"]
     const extractTags = (input) =>
         input
             .split("/")
             .map((t) => t.trim())
             .filter(Boolean);
 
+    //수정, 신규 처리
     const handleSubmit = () => {
         //타이틀/비번은 필수다
         if (!title) {
@@ -180,16 +182,9 @@ function ProjectModal({ onClose, addProject, updateProject, deleteProject, editi
         const payload = {
             title,
             tags: extractTags(tagInput),
-            file, // 🔥 file 없으면 기존 이미지 유지됨
+            file, // file 없으면 기존 이미지 유지됨, 파일 그대로 전달함 app에서 파일 관련 db 처리하기 때문
             password,
         };
-
-        // addProject({
-        //     title,
-        //     tags: extractTags(tagInput),
-        //     file, // 🔥 파일 그대로 전달 >app에서 파일 관련 db 처리하기 때문
-        //     password,
-        // });
 
         if (isEdit) {
             updateProject(editingProject.id, payload);
@@ -200,6 +195,7 @@ function ProjectModal({ onClose, addProject, updateProject, deleteProject, editi
         onClose();
     };
 
+    // 삭제 처리
     const handleDelete = () => {
         if (!password) {
             alert("비밀번호를 입력하세요");

@@ -154,19 +154,21 @@ const StyledProject = styled.section`
     }
 `;
 
+/* 
+    <props>
+    - projectItems : 필터링이 적용된 프로젝트 목록
+    - addProject   : 프로젝트 추가 함수
+    - updateProject: 프로젝트 수정 함수
+    - deleteProject: 프로젝트 삭제 함수
+*/
 function Project({ projectItems, addProject, onCopyFileClick, updateProject, deleteProject }) {
-    // projectItems > 필터링된 아이템
-    const [isModalOpen, setIsModalOpen] = useState(false); //모달 관련
-
-    const [editingProject, setEditingProject] = useState(null);
+    // 모달
+    const [isModalOpen, setIsModalOpen] = useState(false); // 모달 열림/닫힘
+    const [editingProject, setEditingProject] = useState(null); // 수정 중인 프로젝트 (null이면 신규)
 
     // 🔥 body 제어: 모달이 열리면 스크롤 막기
     useEffect(() => {
-        if (isModalOpen) {
-            document.body.style.overflow = "hidden";
-        } else {
-            document.body.style.overflow = "";
-        }
+        document.body.style.overflow = isModalOpen ? "hidden" : "";
 
         return () => {
             document.body.style.overflow = "";
@@ -180,7 +182,7 @@ function Project({ projectItems, addProject, onCopyFileClick, updateProject, del
                     <div
                         className="project_add"
                         onClick={() => {
-                            setEditingProject(null);
+                            setEditingProject(null); //신규모드
                             setIsModalOpen(true);
                         }}
                     >
@@ -207,7 +209,7 @@ function Project({ projectItems, addProject, onCopyFileClick, updateProject, del
                                     <button
                                         className="btn btn_icon"
                                         onClick={() => {
-                                            setEditingProject(item);
+                                            setEditingProject(item); //수정모드
                                             setIsModalOpen(true);
                                         }}
                                     >
@@ -222,7 +224,7 @@ function Project({ projectItems, addProject, onCopyFileClick, updateProject, del
                             </div>
                         </div>
                     ))}
-                    {/* 모달 */}
+                    {/* 모달(신규&수정) */}
                     {isModalOpen && (
                         <ProjectModal
                             onClose={() => setIsModalOpen(false)}

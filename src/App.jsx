@@ -5,22 +5,24 @@ import Project from "./components/Project";
 import { supabase } from "./lib/supabase";
 
 function App() {
-    //top 버튼
+    //스크롤
     const lenisRef = useLenis();
-    const [showTop, setShowTop] = useState(false); //top 버튼 클래스 제어
+
+    //top 버튼
+    const [showTop, setShowTop] = useState(false); // Top 버튼 노출 여부
 
     //필터 tag
     const [filters, setFilters] = useState([]); //중복없는 필터 전체값
-    const [activeFilter, setActiveFilter] = useState("all"); //현재 필터링 값
+    const [activeFilter, setActiveFilter] = useState("all"); //현재 선택된 필터 > 초기값 all
 
-    //프로젝트
+    //전체 프로젝트 목록
     const [projectItems, setProjectItems] = useState([]);
 
     //toast
     const [toastMessage, setToastMessage] = useState(""); //Message 제어
     const [showToastFlag, setShowToastFlag] = useState(false); //Toast가 있는지 없는지
 
-    // 1️⃣ 최초 데이터 조회 (READ)
+    // 최초 Supabase 데이터 조회 (READ)
     useEffect(() => {
         fetchFilters();
     }, []);
@@ -33,28 +35,26 @@ function App() {
                 return;
             }
 
+            // 프로젝트 목록 상태에 저장
             // 데이터가 있으면 데이터를 없으면 빈값[]을
-            // 1) 모든 tags를 하나로 합치기
-            // 2) 중복 제거
-
-            //태그
-            // const uniqueTags = [...new Set(project.flatMap((row) => row.tags || []))];
-            // setFilters(uniqueTags);
-
-            //프로젝트
             setProjectItems(project || []);
         } catch (error) {
             console.log(error);
         }
     };
 
+    //tag 리스트
     useEffect(() => {
+        //모든 tags를 하나로 합침
         const allTags = projectItems.flatMap((item) => item.tags || []);
-        const uniqueTags = [...new Set(allTags)];
-        setFilters(uniqueTags);
-    }, [projectItems]);
 
-    // 관리자 검증
+        //Set을 이용해 중복 제거
+        const uniqueTags = [...new Set(allTags)];
+
+        setFilters(uniqueTags);
+    }, [projectItems]); //프로젝트가 갱신될때 마다 실행
+
+    // 관리자 비밀번호 검증
     const checkAdmin = async (password) => {
         const { data, error } = await supabase.rpc("check_admin_password", {
             input_password: password,
@@ -68,39 +68,45 @@ function App() {
         return true;
     };
 
+    //파일명 생성
     const generateFileName = (file) => {
-        // 1️⃣ 이미지 업로드
-        const fileExt = file.name.split(".").pop(); //점으로 자르고 가장 마지막 문자 = 확장자
-        const baseName = file.name.replace(`.${fileExt}`, ""); //확장자만 제거한 이름 부분
+        //점으로 자르고 가장 마지막 문자 = 확장자
+        const fileExt = file.name.split(".").pop();
 
+        //확장자만 제거한 이름 부분
+        const baseName = file.name.replace(`.${fileExt}`, "");
+
+        //이름_날짜(중복방지).확장자
         return `${baseName}_${Date.now()}.${fileExt}`;
     };
 
-    //데이터를 추가(CREATE)
+    //프로젝트 데이터 추가(CREATE)
     const addProject = async ({ title, tags, file, password }) => {
-        // 🔐 0️⃣ 관리자 비밀번호 검증
+        // 관리자 비밀번호 인증
         const isAdmin = await checkAdmin(password);
         if (!isAdmin) return;
 
         let imgUrl = "";
 
+        // 이미지가 있다면 이미지 업로드
         if (file) {
             try {
-                // 1️⃣ 이미지 업로드
-                // const fileExt = file.name.split(".").pop(); //점으로 자르고 가장 마지막 문자 = 확장자
-                // const baseName = file.name.replace(`.${fileExt}`, ""); //확장자만 제거한 이름 부분
-                // const fileName = `${baseName}_${Date.now()}.${fileExt}`; //파일명_날짜.확장자
                 const fileName = generateFileName(file); //파일명_날짜.확장자
 
-                const { uploadError } = await supabase.storage.from("project_img").upload(fileName, file);
+                const { uploadError } = await supabase.storage
+                    .from("project_img") //storage 이름
+                    .upload(fileName, file);
 
                 if (uploadError) {
                     console.error("Supabase 파일 업로드 오류:", uploadError);
                     return;
                 }
 
-                // 2️⃣ public URL 읽기(가져오기)
-                const { data } = supabase.storage.from("project_img").getPublicUrl(fileName);
+                // 업로드 후 public URL 획득
+                const { data } = supabase.storage
+                    .from("project_img") //storage 이름
+                    .getPublicUrl(fileName);
+
                 imgUrl = data.publicUrl;
             } catch (uploadException) {
                 console.error("이미지 처리 중 예상치 못한 오류:", uploadException);
@@ -109,7 +115,7 @@ function App() {
         }
 
         try {
-            // 3️⃣ 데이터 INSERT
+            // 데이터 입력(INSERT)
             const { data, error } = await supabase
                 .from("project")
                 .insert([{ title, tags, img_url: imgUrl }])
@@ -120,20 +126,20 @@ function App() {
                 return;
             }
 
-            // 프로젝트 즉시 갱신 > 새로운거 앞으로
+            // 프로젝트 즉시 갱신 > 최신 프로젝트를 맨 앞에 추가
             setProjectItems((prev) => [data[0], ...prev]);
-
-            // 태그 즉시 갱신
-            // setFilters((prev) => [...new Set([...prev, ...(data[0].tags || [])])]);
         } catch (error) {
             console.log(error);
         }
     };
 
-    //필터 기능
-    const filteredProjects = activeFilter === "all" ? projectItems : projectItems.filter((project) => project.tags.includes(activeFilter));
+    //필터링 기능
+    const filteredProjects =
+        activeFilter === "all"
+            ? projectItems //전체일때
+            : projectItems.filter((project) => project.tags.includes(activeFilter)); //필터링
 
-    // top버튼 기능
+    // top 기능
     useEffect(() => {
         const onScroll = () => {
             setShowTop(window.scrollY > 200);
@@ -142,13 +148,13 @@ function App() {
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
-    //파일명 추출
+    //URL에서 파일명 추출
     const getFileNameFromUrl = (url) => {
         if (!url) return null;
         return url.split("/").pop();
     };
 
-    // 프로젝트 복사 기능
+    // 프로젝트 복사 + Toast
     const handleCopyFileClick = (title) => {
         navigator.clipboard
             .writeText(title)
@@ -164,47 +170,68 @@ function App() {
             .catch((err) => console.error(err));
     };
 
-    // ✅ UPDATE
+    // 프로젝트 수정 (UPDATE)
     const updateProject = async (id, { title, tags, file, password }) => {
+        // 관리자 비밀번호 인증
         const isAdmin = await checkAdmin(password);
         if (!isAdmin) return;
 
         let updateData = { title, tags };
 
+        // 이미지 변경 시
         if (file) {
-            // 🔥 기존 이미지 조회
-            const { data: oldProject } = await supabase.from("project").select("img_url").eq("id", id).single();
+            // 기존 이미지 조회
+            const { data: oldProject } = await supabase
+                .from("project")
+                .select("img_url") //img_url값을 받아와라
+                .eq("id", id)
+                .single();
 
-            // 🔥 기존 이미지 삭제
+            // 기존 이미지 삭제
             if (oldProject?.img_url) {
-                const oldFileName = getFileNameFromUrl(oldProject.img_url);
+                const oldFileName = getFileNameFromUrl(oldProject.img_url); //기존 이미지 명
                 if (oldFileName) {
                     await supabase.storage.from("project_img").remove([oldFileName]);
                 }
             }
-            // 🔥 새 이미지 업로드
-            const updateFileName = generateFileName(file);
 
-            const { error: uploadError } = await supabase.storage.from("project_img").upload(updateFileName, file);
+            // 새 이미지 업로드
+            const updateFileName = generateFileName(file); //파일명_날짜.확장자
+            const { error: uploadError } = await supabase.storage
+                .from("project_img") //storage 이름
+                .upload(updateFileName, file);
 
             if (uploadError) {
                 console.error(uploadError);
                 return;
             }
 
-            updateData.img_url = supabase.storage.from("project_img").getPublicUrl(updateFileName).data.publicUrl;
+            //새 이미지 url 값 가져오기
+            updateData.img_url = supabase.storage
+                .from("project_img") //storage 이름
+                .getPublicUrl(updateFileName).data.publicUrl;
         }
-        const { data, error } = await supabase.from("project").update(updateData).eq("id", id).select();
+
+        // 데이터 업데이트
+        const { data, error } = await supabase
+            .from("project") //table 명
+            .update(updateData)
+            .eq("id", id)
+            .select();
+
         if (error) return console.error(error);
+
+        //상태 업데이트
         setProjectItems((prev) => prev.map((item) => (item.id === id ? data[0] : item)));
     };
 
-    // ✅ DELETE
+    // 프로젝트 삭제 (DELETE)
     const deleteProject = async (id, password) => {
+        // 관리자 비밀번호 인증
         const isAdmin = await checkAdmin(password);
         if (!isAdmin) return;
 
-        // 1️⃣ 삭제할 프로젝트 먼저 조회 (이미지 URL 얻기)
+        // 삭제할 프로젝트(기존) 이미지 조회 (이미지 URL 얻기)
         const { data: project, error: fetchError } = await supabase.from("project").select("img_url").eq("id", id).single(); //객체 한개로 온다고 배열이 아니고
 
         if (fetchError) {
@@ -212,24 +239,27 @@ function App() {
             return;
         }
 
-        // 2️⃣ Storage 이미지 삭제
+        // Storage 이미지 삭제
         if (project?.img_url) {
             //project가 존재할 때만 img_url에 접근하라
-            const fileName = getFileNameFromUrl(project.img_url);
+            const fileName = getFileNameFromUrl(project.img_url); //파일명
 
             if (fileName) {
-                const { error: storageError } = await supabase.storage.from("project_img").remove([fileName]);
+                const { error: storageError } = await supabase.storage
+                    .from("project_img") //
+                    .remove([fileName]);
 
                 if (storageError) {
                     console.error("이미지 삭제 실패:", storageError);
                 }
             }
         }
-        // 3️⃣ Table row 삭제
+
+        // Table row 삭제
         const { error } = await supabase.from("project").delete().eq("id", id);
         if (error) return console.error(error);
 
-        // 4️⃣ 상태 반영
+        // 상태 업데이트
         setProjectItems((prev) => prev.filter((item) => item.id !== id));
     };
 
